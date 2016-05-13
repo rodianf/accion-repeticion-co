@@ -6,8 +6,11 @@ library(ggplot2)
 library(scales)
 library(reshape2)
 
+#Funciones
+source("scr/functions.R")
+
 # Actualizar datos de Google Sheets
-#source("scr/import.R")
+source("scr/import.R")
 
 # Cargar datos en formato Rda
 load("dat/datos.Rda")
@@ -122,13 +125,14 @@ colnames(consejero) <- c("Consejero ponente", "Sentencias", "Porcentaje")
 print(xtable(consejero, caption = paste0("Número de sentencias por consejero ponente. ", "\\textit{", "n=", "}", nrow(consejero), "."), 
              label = "tab:consejero", digits = 1), include.rownames=FALSE, file = "res/consejero.tex", caption.placement = "top", table.placement = "H")
 
-## Única instancia
-datos$Única.Instancia <- factor(datos$Única.Instancia, levels = c("No", "Si"), labels = c("Dos", "Una"))
+## Instancias
+datos$Única.Instancia <- factor(datos$Única.Instancia, levels = c("No", "Si"), labels = c("Segunda", "Primera"))
 instancia <- datos %>%
   group_by(Única.Instancia) %>%
   summarise(Sentencias = n()) %>%
   mutate(Porcentaje = (Sentencias / sum(Sentencias))*100)
 colnames(instancia) <- c("Instancias", "Sentencias", "Porcentaje")
+tabla(instancia, "Número de sentencias según instancias. ")
 print(xtable(instancia, caption = "Número de sentencias por instancias.", label = "tab:instancia", digits = 1),
       include.rownames=FALSE, file = "res/instancia.tex", caption.placement = "top", table.placement = "H")
 
