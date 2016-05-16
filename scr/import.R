@@ -1,6 +1,7 @@
 # Importar de Google Drive
 # options(httr_oob_default=TRUE) #Autenticación en RStudio Server
 # https://support.rstudio.com/hc/en-us/articles/217952868
+library(googlesheets)
 
 gap <- gs_title("Datos Consejo de Estado") # Nombre del documento de Sheets en G Drive
 

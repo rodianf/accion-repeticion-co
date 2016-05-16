@@ -114,8 +114,34 @@ colnames(victima) <- c("Víctima", "Sentencias", "Porcentaje")
 print(xtable(victima, caption = paste0("Número de sentencias según la víctima. ", "\\textit{", "n=", "}", nrow(victima), "."), 
              label = "tab:victima", digits = 1), include.rownames=FALSE, file = "res/victima.tex", caption.placement = "top", table.placement = "H")
 
+## Proceso de responsabilidad estatal -------------------------------------------------
 
-## Acción de repetición
+# Región fallo
+tabla(variable = "Región.Fallo", label = "regfal", colname = "Región", 
+       data = datos, caption = "Número de sentencias según la región del fallo")
+  
+# Departamento fallo
+tabla(variable = "Departamento.Fallo", label = "depfal", colname = "Departamento",
+      data = datos, caption = "Número de sentencias según el departamento del fallo")
+
+
+
+# Municipio fallo
+datos$munfal <- paste0(datos$Municipio.Fallo, ", ", datos$Departamento.Fallo)
+tabla(variable = "munfal", label = "munfal", colname = "Municipio",
+      data = datos, caption = "Número de sentencias según el municipio del fallo")
+
+# Indemnización
+ggplot(datos, aes(x=factor(0), y=Indemnizacion)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = dollar) +
+  scale_x_discrete(breaks = NULL) +
+  theme_bw() +
+  labs(x = "", y = "\nIndemnización (COP)") +
+  coord_flip()
+ggsave("res/indemnizacion.eps", height = 5, width = 16, units = "cm")
+
+## Acción de repetición -------------------------------------------------------
 ## Consejero ponente
 consejero <- datos %>%
   group_by(Consejero.Ponente) %>%
@@ -157,3 +183,13 @@ ggplot(actorto, aes(x = reorder(Actor, Sentencias), y = Sentencias)) +
   labs(x = "") +
   theme_bw()
 ggsave("res/actor.eps", height = 7, width = 15, units = "cm")
+
+
+## Fallo
+tabla(variable = "Fallo.Culp", label = "fallo", colname = "Fallo",
+      data = datos, caption = "Número de sentencias según el fallo")
+
+## Motivo improcedencia
+tabla(variable = "Motivo.Improcedencia", label = "improcedencia", colname = "Motivo de improcedencia",
+      data = datos, caption = "Número de sentencias según el motivo de improcedencia")
+
