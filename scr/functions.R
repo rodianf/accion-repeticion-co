@@ -89,7 +89,7 @@ gbar <- function(data, saveg = FALSE, height = NA, width = NA, label) {
   
 }
 
-gbar(dephec, saveg = TRUE, label = "rosa")
+#gbar(dephec, saveg = TRUE, label = "rosa")
 
 
 # ggname
