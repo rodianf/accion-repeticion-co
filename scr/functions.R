@@ -33,7 +33,9 @@ tabla <- function(data = datos,
                   caption = "Caption",
                   savet = FALSE,
                   plot = FALSE,
-                  saveg = FALSE) {
+                  saveg = FALSE,
+                  height = NA, 
+                  width = NA) {
   suppressMessages(library(dplyr))
   library(xtable)
   
@@ -50,7 +52,7 @@ tabla <- function(data = datos,
   
   # Mostrar gráfico y/o guardarlo
   if (plot == TRUE) {
-    gbar(dat, saveg = saveg, label = label)
+    gbar(dat, saveg = saveg, label = label, height = height, width = width)
   }
   
   # Mostrar en pantalla o retornar la tabla en un objeto
@@ -109,6 +111,25 @@ ggname <- function(x) {
   )
   y 
 }
+
+
+# totrow
+# Produce una tabla que resume los municipios con una sentencia a la fila "Otros"
+otros <- function(data = datos, colname) {
+  mas1 <- data %>%
+    select(1:2) %>%
+    filter(Sentencias > 1)
+  
+  men1 <- data %>%
+    select(1:2) %>%
+    filter(Sentencias == 1) %>%
+    summarise(Municipio = "Otros", Sentencias = n())
+  
+  bind_rows(mas1, men1)
+}
+
+#otros(munhec, colname = "Casos")
+#data = munhec
 
 # ------------------------------------------------------------
 # Sandbox

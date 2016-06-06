@@ -9,64 +9,42 @@ library(reshape2)
 #Funciones
 source("scr/functions.R")
 
-# Actualizar datos de Google Sheets
-source("scr/import.R")
-
 # Cargar datos en formato Rda
 load("dat/datos.Rda")
 load("dat/datos.dano.Rda")
-load("dat/datos.fechas.Rda")
+
+
+
+# Actualizar datos de Google Sheets
+source("scr/import.R")
+
+datos <- importar("datos") #Opción guardar = TRUE produce un archivo .Rda en la subcarpeta dat
+dano <- importar("dano") #Daño
+
 
 # Descriptivos -------------------------------------------------------------------------------------------
 # Hechos -------------------------------------------------------------------------------------------------
 
-## Fecha del hecho
-fechas.m <- melt(datos.fechas[, -c(1,2)])
-ggplot(fechas.m, aes(x = format(value, "%Y"))) +
-  geom_bar() +
-  facet_grid(variable ~ .)
-
-
 ## Region
-reghec <- datos %>%
-  group_by(Región.Hechos) %>%
-  summarise(Sentencias = n()) %>%
-  mutate(Porcentaje = round((Sentencias / sum(Sentencias))*100, 1))
-colnames(reghec) <- c("Región", "Sentencias", "Porcentaje")
-print(xtable(reghec, caption = paste0("Número de sentencias según la región lugar de los hechos. ", "\\textit{", "n=", "}", nrow(reghec), "."), 
-             label= "tab:reghec", digits = 1), include.rownames=FALSE, file = "res/reghec.tex", caption.placement = "top", table.placement = "H")
+tabla(datos, variable = "Región.Hechos", label = "reghec", colname = "Región",
+      caption = "Número de sentencias según la región lugar de los hechos", 
+      savet = TRUE)
 
 ## Departamento
-dephec <- datos %>%
-  group_by(Departamento.Hechos) %>%
-  summarise(Sentencias = n()) %>%
-  mutate(Porcentaje = round((Sentencias / sum(Sentencias))*100, 1))
-colnames(dephec) <- c("Departamento", "Sentencias", "Porcentaje")
-print(xtable(dephec, caption = paste0("Número de sentencias según el departamento lugar de los hechos. ", "\\textit{", "n=", "}", nrow(dephec), "."), label= "tab:dephec", digits = 1),
-      include.rownames=FALSE, file = "res/dephec.tex", caption.placement = "top", table.placement = "H")
-
-ggplot(dephec, aes(x = reorder(Departamento, Sentencias), y = Sentencias)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  labs(x = "") +
-  theme_bw()
-ggsave("res/dephec.eps", height = 9, width = 13, units = "cm")
+tabla(datos, variable = "Departamento.Hechos", label = "dephec", colname = "Departamento",
+      caption = "Número de sentencias según el departamento lugar de los hechos", 
+      savet = TRUE, plot = TRUE, saveg = TRUE, height = 11, width = 13)
 
 ## Municipio
 datos$munhec <- paste(datos$Municipio.Hechos, ", ", datos$Departamento.Hechos, sep = "")
-munhec <- datos %>%
-  group_by(munhec) %>%
-  summarise(Sentencias = n()) %>%
-  mutate(Porcentaje = round((Sentencias / sum(Sentencias))*100, 1))
-colnames(munhec) <- c("Municipio", "Sentencias", "Porcentaje")
-print(xtable(munhec, caption = paste0("Número de sentencias según el municipio lugar de los hechos. ", "\\textit{", "n=", "}", nrow(munhec), "."), 
-             label= "tab:munhec", digits = 1), include.rownames=FALSE, file = "res/munhec.tex", caption.placement = "top", table.placement = "H")
 
-munhecot <- munhec[ which(munhec$Sentencias == 1), ]
-munhecto <- munhec[ which(munhec$Sentencias > 1), ]
-munhecto <- rbind(munhecto, data.frame(Municipio = "Otros", Sentencias = sum(munhecot$Sentencias), 
-                                       Porcentaje = round((sum(munhecot$Sentencias)/nrow(datos))*100, 1)))
-ggplot(munhecto, aes(x = reorder(Municipio, Sentencias), y = Sentencias)) +
+munhec <- tabla(datos, variable = "munhec", label = "munhec", colname = "Municipio",
+                caption = "Número de sentencias según el municipio lugar de los hechos",
+                savet = FALSE)
+
+munhec <- otros(munhec)
+
+ggplot(munhec, aes(x = reorder(Municipio, Sentencias), y = Sentencias)) +
   geom_bar(stat = "identity") +
   coord_flip() +
   labs(x = "") +
@@ -74,64 +52,65 @@ ggplot(munhecto, aes(x = reorder(Municipio, Sentencias), y = Sentencias)) +
 ggsave("res/munhec.eps", height = 6, width = 10, units = "cm")
 
 ## Entidad estatal
-entidad <- datos %>%
-  group_by(Entidad.Estatal) %>%
-  summarise(Sentencias = n()) %>%
-  mutate(Porcentaje = round((Sentencias / sum(Sentencias))*100, 1))
-colnames(entidad) <- c("Entidad estatal", "Sentencias", "Porcentaje")
-print(xtable(entidad, caption = paste0("Número de sentencias por entidad estatal que incurrió en el daño. ", "\\textit{", "n=", "}", nrow(entidad), "."), 
-             label = "tab:entidad", digits = 1), include.rownames=FALSE, file = "res/entidad.tex", caption.placement = "top", table.placement = "H")
+tabla(datos, variable = "Entidad.Estatal", label = "entidad", colname = "Entidad estatal",
+      caption = "Número de sentencias según la entidad estatal que incurrió en el daño", 
+      savet = TRUE, plot = TRUE, saveg = TRUE, height = 13, width = 15.24)
 
-ggplot(entidad, aes(x = reorder(`Entidad estatal`, Sentencias), y = Sentencias)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  labs(x = "") +
-  theme_bw()
-ggsave("res/entidad.eps", height = 8, width = 15, units = "cm")
 
 ## Daño
-dano <- datos.dano %>%
-  group_by(Tipo.Dano) %>%
-  summarise(Sentencias = n()) %>%
-  mutate(Porcentaje = round((Sentencias / sum(Sentencias))*100, 1))
-colnames(dano) <- c("Tipo de daño", "Sentencias", "Porcentaje")
-print(xtable(dano, caption = paste0("Número de sentencias según el tipo de daño. ", "\\textit{", "n=", "}", nrow(dano), "."), 
-             label = "tab:dano", digits = 1), include.rownames=FALSE, file = "res/dano.tex", caption.placement = "top", table.placement = "H")
-
-ggplot(dano, aes(x = reorder(`Tipo de daño`, Sentencias), y = Sentencias)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  labs(x = "") +
-  theme_bw()
-ggsave("res/dano.eps", height = 8, width = 15, units = "cm")
+tabla(dano, variable = "Tipo.Dano", label = "dano", colname = "Tipo de daño",
+      caption = "Número de sentencias según el tipo de daño", 
+      savet = TRUE, plot = TRUE, saveg = TRUE, height = 8, width = 15)
 
 ## Víctima
-victima <- datos %>%
-  group_by(Víctima) %>%
-  summarise(Sentencias =n()) %>%
-  mutate(Porcentaje = round((Sentencias / sum(Sentencias))*100, 1))
-colnames(victima) <- c("Víctima", "Sentencias", "Porcentaje")
-print(xtable(victima, caption = paste0("Número de sentencias según la víctima. ", "\\textit{", "n=", "}", nrow(victima), "."), 
-             label = "tab:victima", digits = 1), include.rownames=FALSE, file = "res/victima.tex", caption.placement = "top", table.placement = "H")
+tabla(datos, variable = "Víctima", label = "victima", colname = "Victima",
+      caption = "Número de sentencias según la víctima", 
+      savet = TRUE)
 
 ## Proceso de responsabilidad estatal -------------------------------------------------
 
 # Región fallo
-tabla(variable = "Región.Fallo", label = "regfal", colname = "Región", 
-       data = datos, caption = "Número de sentencias según la región del fallo")
+tabla(datos, variable = "Región.Fallo", label = "regfal", colname = "Región", 
+      caption = "Número de sentencias según la región del fallo")
   
 # Departamento fallo
-tabla(variable = "Departamento.Fallo", label = "depfal", colname = "Departamento",
-      data = datos, caption = "Número de sentencias según el departamento del fallo")
-
-
+tabla(datos, variable = "Departamento.Fallo", label = "depfal", colname = "Departamento",
+      caption = "Número de sentencias según el departamento del fallo", plot = TRUE, 
+      saveg = TRUE, savet = TRUE, height = 10, width= 15.24)
 
 # Municipio fallo
 datos$munfal <- paste0(datos$Municipio.Fallo, ", ", datos$Departamento.Fallo)
-tabla(variable = "munfal", label = "munfal", colname = "Municipio",
-      data = datos, caption = "Número de sentencias según el municipio del fallo")
+munfal <- tabla(datos, variable = "munfal", label = "munfal", colname = "Municipio",
+      caption = "Número de sentencias según el municipio del fallo")
 
-# Indemnización
+munfal <- otros(munfal)
+
+ggplot(munfal, aes(x = reorder(Municipio, Sentencias), y = Sentencias)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(x = "") +
+  theme_bw()
+ggsave("res/munfal.eps", height = 6, width = 10, units = "cm")
+
+## Indemnizacion
+indem <- datos %>%
+  summarise(Mínimo = min(Indemnizacion), "25%" = quantile(Indemnizacion, 0.25),
+            Mediana = median(Indemnizacion), "75%" = quantile(Indemnizacion, 0.75),
+            Máximo = max(Indemnizacion), Promedio = mean(Indemnizacion), 
+            "Desviación estándar" = sd(Indemnizacion)) 
+indem <- t(indem)
+colnames(indem) <- "Indemnización"
+indem <- as.data.frame(indem)
+indem[,1] <- dollar_format()(indem[,1])
+
+print(xtable(indem, caption = "Estadísticos del valor de la indemnización.", 
+             label= "tab:indemnizacion", digits = 1), 
+      include.rownames=TRUE, 
+      file = "res/indemnizacion.tex", 
+      caption.placement = "top", 
+      table.placement = "H")
+
+
 ggplot(datos, aes(x=factor(0), y=Indemnizacion)) +
   geom_boxplot() +
   scale_y_continuous(labels = dollar) +
@@ -143,24 +122,12 @@ ggsave("res/indemnizacion.eps", height = 5, width = 16, units = "cm")
 
 ## Acción de repetición -------------------------------------------------------
 ## Consejero ponente
-consejero <- datos %>%
-  group_by(Consejero.Ponente) %>%
-  summarise(Sentencias = n()) %>%
-  mutate(Porcentaje = round((Sentencias / sum(Sentencias))*100, 1))
-colnames(consejero) <- c("Consejero ponente", "Sentencias", "Porcentaje")
-print(xtable(consejero, caption = paste0("Número de sentencias por consejero ponente. ", "\\textit{", "n=", "}", nrow(consejero), "."), 
-             label = "tab:consejero", digits = 1), include.rownames=FALSE, file = "res/consejero.tex", caption.placement = "top", table.placement = "H")
+tabla(datos, variable = "Consejero.Ponente", label = "consejero", colname = "Consejero ponente",
+      caption = "Número de sentencias según el consejero ponente", savet = TRUE)
 
 ## Instancias
-datos$Única.Instancia <- factor(datos$Única.Instancia, levels = c("No", "Si"), labels = c("Segunda", "Primera"))
-instancia <- datos %>%
-  group_by(Única.Instancia) %>%
-  summarise(Sentencias = n()) %>%
-  mutate(Porcentaje = (Sentencias / sum(Sentencias))*100)
-colnames(instancia) <- c("Instancias", "Sentencias", "Porcentaje")
-tabla(instancia, "Número de sentencias según instancias. ")
-print(xtable(instancia, caption = "Número de sentencias por instancias.", label = "tab:instancia", digits = 1),
-      include.rownames=FALSE, file = "res/instancia.tex", caption.placement = "top", table.placement = "H")
+tabla(datos, variable = "Única.Instancia", label = "instancia", colname = "Instancias",
+      caption = "Número de sentencias según instancias", savet = TRUE)
 
 ## Actor
 actor <- datos %>%
@@ -186,10 +153,42 @@ ggsave("res/actor.eps", height = 7, width = 15, units = "cm")
 
 
 ## Fallo
-tabla(variable = "Fallo.Culp", label = "fallo", colname = "Fallo",
-      data = datos, caption = "Número de sentencias según el fallo")
+tabla(datos, variable = "Fallo.Culp", label = "fallo", colname = "Fallo",
+      caption = "Número de sentencias según el fallo")
 
 ## Motivo improcedencia
+datos.imp <- datos[!is.na(datos$Motivo.Improcedencia), ]
 tabla(variable = "Motivo.Improcedencia", label = "improcedencia", colname = "Motivo de improcedencia",
-      data = datos, caption = "Número de sentencias según el motivo de improcedencia")
+      data = datos.imp, caption = "Número de sentencias según el motivo de improcedencia",
+      plot = TRUE, saveg = TRUE)
+rm(datos.imp)
 
+
+## Reembolso
+ggplot(datos, aes(x=factor(0), y=Valor.Reembolso)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = dollar) +
+  scale_x_discrete(breaks = NULL) +
+  theme_bw() +
+  labs(x = "", y = "\nReembolso (COP)") +
+  coord_flip()
+ggsave("res/reembolso.eps", height = 5, width = 16, units = "cm")
+
+
+datos.reemb <- datos[!is.na(datos$Valor.Reembolso), ]
+reemb <- datos.reemb %>%
+  summarise(Mínimo = min(Valor.Reembolso), "25%" = quantile(Valor.Reembolso, 0.25),
+            Mediana = median(Valor.Reembolso), "75%" = quantile(Valor.Reembolso, 0.75),
+            Máximo = max(Valor.Reembolso), Promedio = mean(Valor.Reembolso), 
+            "Desviación estándar" = sd(Valor.Reembolso)) 
+reemb <- t(reemb)
+colnames(reemb) <- "Reembolso"
+reemb <- as.data.frame(reemb)
+reemb[,1] <- dollar_format()(reemb[,1])
+
+print(xtable(reemb, caption = "Estadísticos del valor del reembolso.", 
+             label= "tab:reembolso", digits = 1), 
+      include.rownames=TRUE, 
+      file = "res/reembolso.tex", 
+      caption.placement = "top", 
+      table.placement = "H")
